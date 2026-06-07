@@ -10,11 +10,11 @@
 
 // ✏️ EDITÁ ESTOS NOMBRES antes de ejecutar
 const PLAYER_NAMES = [
-  "Jugador 1",
-  "Jugador 2",
-  "Jugador 3",
-  "Jugador 4",
-  "Jugador 5",
+  "Fede",
+  "Lolo",
+  "Joita",
+  "Mati",
+  "Emi",
 ];
 
 function setupProde() {
@@ -40,10 +40,14 @@ function setupJugador6() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(),
 function setupJugador7() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[6]); }
 function setupJugador8() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[7]); }
 
+function deleteAndCreate(ss, name, index) {
+  const existing = ss.getSheetByName(name);
+  if (existing) ss.deleteSheet(existing);
+  return index !== undefined ? ss.insertSheet(name, index) : ss.insertSheet(name);
+}
+
 function setupConfigTab(ss) {
-  let sheet = ss.getSheetByName("CONFIG");
-  if (!sheet) sheet = ss.insertSheet("CONFIG", 0);
-  sheet.clearContents();
+  let sheet = deleteAndCreate(ss, "CONFIG", 0);
 
   // Título + nombres en una sola operación
   const data = [["PRODE MUNDIAL 2026"], ["JUGADORES"]].concat(
@@ -58,9 +62,7 @@ function setupConfigTab(ss) {
 }
 
 function setupResultadosTab(ss) {
-  let sheet = ss.getSheetByName("RESULTADOS");
-  if (!sheet) sheet = ss.insertSheet("RESULTADOS");
-  sheet.clearContents();
+  let sheet = deleteAndCreate(ss, "RESULTADOS");
 
   const headers = [[
     "ID Partido", "Goleadores Local", "Goleadores Visitante",
@@ -81,9 +83,7 @@ function setupResultadosTab(ss) {
 }
 
 function setupTorneoRealTab(ss) {
-  let sheet = ss.getSheetByName("TORNEO_REAL");
-  if (!sheet) sheet = ss.insertSheet("TORNEO_REAL");
-  sheet.clearContents();
+  let sheet = deleteAndCreate(ss, "TORNEO_REAL");
 
   const data = [
     ["RESULTADO FINAL DEL TORNEO", ""],
@@ -98,9 +98,7 @@ function setupTorneoRealTab(ss) {
 }
 
 function setupPlayerTab(ss, playerName) {
-  let sheet = ss.getSheetByName(playerName);
-  if (!sheet) sheet = ss.insertSheet(playerName);
-  sheet.clearContents();
+  let sheet = deleteAndCreate(ss, playerName);
 
   const HEADERS = [
     "ID Partido", "Goles Local", "Goles Visit.",
