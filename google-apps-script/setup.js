@@ -125,17 +125,15 @@ function setupPlayerTab(ss, playerName) {
   sheet.getRange(3, 1, 1, NCOLS).setValues([HEADERS])
     .setBackground("#16213e").setFontColor("#60a5fa").setFontWeight("bold");
 
-  // --- 104 filas vacías en batch ---
+  // --- 104 filas vacías + colores alternados, todo en 2 llamadas ---
   const emptyRows = Array(104).fill(null).map(() => Array(NCOLS).fill(""));
-  sheet.getRange(4, 1, 104, NCOLS).setValues(emptyRows).setFontColor("#ffffff");
-
-  // Colores alternados en batch
-  const bgLight = Array(52).fill(null).map(() => Array(NCOLS).fill("#0d1526"));
-  const bgDark  = Array(52).fill(null).map(() => Array(NCOLS).fill("#0f1e35"));
-  for (let i = 0; i < 104; i++) {
-    const bg = i % 2 === 0 ? "#0d1526" : "#0f1e35";
-    sheet.getRange(4 + i, 1, 1, NCOLS).setBackground(bg);
-  }
+  const altBg = Array(104).fill(null).map((_, i) =>
+    Array(NCOLS).fill(i % 2 === 0 ? "#0d1526" : "#0f1e35")
+  );
+  const matchRange = sheet.getRange(4, 1, 104, NCOLS);
+  matchRange.setValues(emptyRows);
+  matchRange.setBackgrounds(altBg);   // una sola llamada para los 104 colores
+  matchRange.setFontColor("#ffffff");
 
   // --- Sección LESIONES ---
   const lesRow = 109;
