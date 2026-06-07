@@ -8,6 +8,8 @@
  * 3. Click en Run y aceptá los permisos
  */
 
+const FOOTBALL_API_KEY = "acf1ae4a1a764280a02a93f57f71eb33"; // football-data.org
+
 // ✏️ EDITÁ ESTOS NOMBRES antes de ejecutar
 const PLAYER_NAMES = [
   "Fede",
@@ -22,12 +24,102 @@ function setupProde() {
   setupConfigTab(ss);
   setupResultadosTab(ss);
   setupTorneoRealTab(ss);
-  // Creamos una pestaña de jugador por vez
-  // Si tenés muchos jugadores y sigue fallando, ejecutá setupJugador1, setupJugador2, etc.
   for (const name of PLAYER_NAMES) {
     setupPlayerTab(ss, name);
   }
-  SpreadsheetApp.getUi().alert('✅ Listo! Compartí el sheet con los jugadores.\nRecordá ponerlo en "Cualquiera con el link puede ver".');
+  // Borrar Sheet1 si existe
+  const sheet1 = ss.getSheetByName("Sheet1") || ss.getSheetByName("Hoja 1");
+  if (sheet1) ss.deleteSheet(sheet1);
+  SpreadsheetApp.getUi().alert('✅ Listo! Ahora ejecutá fillMatches para cargar los partidos.');
+}
+
+// ⚽ Carga los 104 partidos del Mundial en todas las pestañas de jugadores
+function fillMatches() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Traer partidos de la API
+  const resp = UrlFetchApp.fetch(
+    "https://api.football-data.org/v4/competitions/WC/matches?season=2026",
+    { headers: { "X-Auth-Token": FOOTBALL_API_KEY } }
+  );
+  const data = JSON.parse(resp.getContentText());
+  const matches = data.matches;
+
+  if (!matches || matches.length === 0) {
+    SpreadsheetApp.getUi().alert("No se pudieron obtener los partidos. Verificá la API key.");
+    return;
+  }
+
+  // Ordenar por fecha
+  matches.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+
+  // Preparar filas: [ID, Fecha, Local, Visitante, "", "", ...] (22 columnas)
+  const NCOLS = 22;
+  const rows = matches.map(m => {
+    const fecha = Utilities.formatDate(new Date(m.utcDate), "America/Argentina/Buenos_Aires", "dd/MM HH:mm");
+    const home = m.homeTeam.name || "TBD";
+    const away = m.awayTeam.name || "TBD";
+    const row = Array(NCOLS).fill("");
+    row[0] = m.id;
+    row[1] = fecha;
+    row[2] = home;
+    row[3] = away;
+    return row;
+  });
+
+  // Secciones finales (LESIONES y TORNEO)
+  const lesionesSection = [
+    ["LESIONES", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+    ["(jugador que creés que se lesiona - 1 pto c/u)", ...Array(21).fill("")],
+    ...Array(10).fill(Array(NCOLS).fill("")),
+  ];
+  const torneoSection = [
+    ["TORNEO", ...Array(21).fill("")],
+    ["CAMPEON", "", "→ 15 pts", ...Array(19).fill("")],
+    ["SUBCAMPEON", "", "→ 12 pts", ...Array(19).fill("")],
+    ["TERCERO", "", "→ 10 pts", ...Array(19).fill("")],
+    ["MEJOR JUGADOR", "", "→ 10 pts", ...Array(19).fill("")],
+    ["MEJOR JUGADOR JOVEN", "", "→ 5 pts", ...Array(19).fill("")],
+    ["GOLEADOR", "", "→ 10 pts", ...Array(19).fill("")],
+  ];
+
+  const HEADERS = [[
+    "ID", "Fecha (ARG)", "Local", "Visitante",
+    "Goles Local", "Goles Visit.",
+    "Goleadores Local (coma)", "Goleadores Visit. (coma)",
+    "T.Amar Local", "T.Amar Visit.", "T.Roja Local", "T.Roja Visit.",
+    "Penal Local(S/N)", "Penal Visit.(S/N)", "PenAtaj.Local(S/N)", "PenAtaj.Visit.(S/N)",
+    "Alargue(S/N)", "Penales(S/N)", "Gol Alarg.Local", "Gol Alarg.Visit.",
+    "Invasión(S/N)", "Bomba(S/N)"
+  ]];
+
+  for (const name of PLAYER_NAMES) {
+    const sheet = ss.getSheetByName(name);
+    if (!sheet) continue;
+
+    // Headers en fila 3
+    sheet.getRange(3, 1, 1, NCOLS).setValues(HEADERS)
+      .setBackground("#16213e").setFontColor("#60a5fa").setFontWeight("bold");
+
+    // Partidos desde fila 4
+    sheet.getRange(4, 1, rows.length, NCOLS).setValues(rows);
+
+    // Columnas A-D (info) en gris — no se tocan
+    sheet.getRange(4, 1, rows.length, 4).setFontColor("#6b7280").setFontStyle("italic");
+
+    // Columnas E-V (predicciones) en blanco
+    sheet.getRange(4, 5, rows.length, NCOLS - 4).setFontColor("#ffffff");
+
+    // Secciones finales
+    const afterRow = 4 + rows.length + 1;
+    sheet.getRange(afterRow, 1, lesionesSection.length, NCOLS).setValues(lesionesSection);
+    sheet.getRange(afterRow + lesionesSection.length + 1, 1, torneoSection.length, NCOLS).setValues(torneoSection);
+
+    SpreadsheetApp.flush();
+    Logger.log("Cargado: " + name);
+  }
+
+  SpreadsheetApp.getUi().alert("✅ " + matches.length + " partidos cargados en todas las pestañas!");
 }
 
 // Si setupProde falla por tiempo, ejecutá estas individualmente:

@@ -89,26 +89,33 @@ export async function getPlayerData(playerName: string): Promise<PlayerData | nu
         const homeGoals = row[1] !== undefined && row[1] !== "" ? parseInt(row[1]) : null;
         const awayGoals = row[2] !== undefined && row[2] !== "" ? parseInt(row[2]) : null;
 
+        // Columns: A=matchId, B=fecha, C=local, D=visitante (info, auto-filled)
+        // E=homeGoals, F=awayGoals, G=homeScorers, H=awayScorers,
+        // I=ycHome, J=ycAway, K=rcHome, L=rcAway,
+        // M=penHome, N=penAway, O=spHome, P=spAway,
+        // Q=ET, R=shootout, S=etGoalHome, T=etGoalAway, U=pitchInvader, V=bombThreat
+        const homeGoalsVal = row[4] !== undefined && row[4] !== "" ? parseInt(row[4]) : null;
+        const awayGoalsVal = row[5] !== undefined && row[5] !== "" ? parseInt(row[5]) : null;
         predictions.push({
           matchId,
-          homeGoals: homeGoals !== null && isNaN(homeGoals) ? null : homeGoals,
-          awayGoals: awayGoals !== null && isNaN(awayGoals) ? null : awayGoals,
-          homeScorers: row[3] ? row[3].split(",").map((s) => s.trim()).filter(Boolean) : [],
-          awayScorers: row[4] ? row[4].split(",").map((s) => s.trim()).filter(Boolean) : [],
-          yellowCardHome: row[5] || null,
-          yellowCardAway: row[6] || null,
-          redCardHome: row[7] || null,
-          redCardAway: row[8] || null,
-          penaltyHome: row[9]?.toUpperCase() === "S",
-          penaltyAway: row[10]?.toUpperCase() === "S",
-          savedPenaltyHome: row[11]?.toUpperCase() === "S",
-          savedPenaltyAway: row[12]?.toUpperCase() === "S",
-          extraTime: row[13]?.toUpperCase() === "S",
-          penaltyShootout: row[14]?.toUpperCase() === "S",
-          etGoalHome: row[15] || null,
-          etGoalAway: row[16] || null,
-          pitchInvader: row[17]?.toUpperCase() === "S",
-          bombThreat: row[18]?.toUpperCase() === "S",
+          homeGoals: homeGoalsVal !== null && isNaN(homeGoalsVal) ? null : homeGoalsVal,
+          awayGoals: awayGoalsVal !== null && isNaN(awayGoalsVal) ? null : awayGoalsVal,
+          homeScorers: row[6] ? row[6].split(",").map((s) => s.trim()).filter(Boolean) : [],
+          awayScorers: row[7] ? row[7].split(",").map((s) => s.trim()).filter(Boolean) : [],
+          yellowCardHome: row[8] || null,
+          yellowCardAway: row[9] || null,
+          redCardHome: row[10] || null,
+          redCardAway: row[11] || null,
+          penaltyHome: row[12]?.toUpperCase() === "S",
+          penaltyAway: row[13]?.toUpperCase() === "S",
+          savedPenaltyHome: row[14]?.toUpperCase() === "S",
+          savedPenaltyAway: row[15]?.toUpperCase() === "S",
+          extraTime: row[16]?.toUpperCase() === "S",
+          penaltyShootout: row[17]?.toUpperCase() === "S",
+          etGoalHome: row[18] || null,
+          etGoalAway: row[19] || null,
+          pitchInvader: row[20]?.toUpperCase() === "S",
+          bombThreat: row[21]?.toUpperCase() === "S",
         });
       } else if (section === "lesiones") {
         if (cellA) injuries.push({ playerName: cellA });
