@@ -1,15 +1,14 @@
 /**
  * PRODE MUNDIAL 2026 - Script de configuración del Google Sheet
+ * Versión optimizada — usa operaciones en batch para no agotar el tiempo.
  *
  * INSTRUCCIONES:
- * 1. Abrí Google Sheets → Extensions → Apps Script
- * 2. Pegá este código
- * 3. Ejecutá la función `setupProde`
- * 4. Aceptá los permisos
- *
- * Podés editar PLAYER_NAMES antes de ejecutar.
+ * 1. Guardá el script (Ctrl+S)
+ * 2. Seleccioná "setupProde" en el menú desplegable
+ * 3. Click en Run y aceptá los permisos
  */
 
+// ✏️ EDITÁ ESTOS NOMBRES antes de ejecutar
 const PLAYER_NAMES = [
   "Jugador 1",
   "Jugador 2",
@@ -18,48 +17,43 @@ const PLAYER_NAMES = [
   "Jugador 5",
 ];
 
-// Colores
-const COLOR_HEADER = "#1a2744";
-const COLOR_MATCH_ROW = "#0d1526";
-const COLOR_SECTION = "#16213e";
-const COLOR_GREEN = "#1e3a2f";
-
 function setupProde() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-
   setupConfigTab(ss);
   setupResultadosTab(ss);
   setupTorneoRealTab(ss);
-
+  // Creamos una pestaña de jugador por vez
+  // Si tenés muchos jugadores y sigue fallando, ejecutá setupJugador1, setupJugador2, etc.
   for (const name of PLAYER_NAMES) {
     setupPlayerTab(ss, name);
   }
-
-  SpreadsheetApp.getUi().alert(
-    "✅ Prode configurado!\n\n" +
-    "Compartí este sheet con cada jugador para que complete sus pestañas.\n" +
-    "El 10 de junio podés proteger las pestañas.\n\n" +
-    "Próximo paso: configurar la web app con el ID de este sheet."
-  );
+  SpreadsheetApp.getUi().alert('✅ Listo! Compartí el sheet con los jugadores.\nRecordá ponerlo en "Cualquiera con el link puede ver".');
 }
+
+// Si setupProde falla por tiempo, ejecutá estas individualmente:
+function setupJugador1() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[0]); }
+function setupJugador2() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[1]); }
+function setupJugador3() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[2]); }
+function setupJugador4() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[3]); }
+function setupJugador5() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[4]); }
+function setupJugador6() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[5]); }
+function setupJugador7() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[6]); }
+function setupJugador8() { setupPlayerTab(SpreadsheetApp.getActiveSpreadsheet(), PLAYER_NAMES[7]); }
 
 function setupConfigTab(ss) {
   let sheet = ss.getSheetByName("CONFIG");
   if (!sheet) sheet = ss.insertSheet("CONFIG", 0);
   sheet.clearContents();
-  sheet.clearFormats();
 
-  sheet.getRange("A1").setValue("PRODE MUNDIAL 2026").setFontSize(16).setFontWeight("bold").setFontColor("#4ade80");
-  sheet.getRange("A3").setValue("JUGADORES").setFontWeight("bold").setFontColor("#94a3b8");
-
-  PLAYER_NAMES.forEach((name, i) => {
-    sheet.getRange(4 + i, 1).setValue(name).setFontColor("white");
-  });
-
-  sheet.getRange("A1:B1").merge().setBackground(COLOR_HEADER);
-  sheet.getRange("A1:Z50").setBackground(COLOR_MATCH_ROW);
-  sheet.getRange("A1").setBackground(COLOR_HEADER);
-
+  // Título + nombres en una sola operación
+  const data = [["PRODE MUNDIAL 2026"], ["JUGADORES"]].concat(
+    PLAYER_NAMES.map(n => [n])
+  );
+  sheet.getRange(1, 1, data.length, 1).setValues(data);
+  sheet.getRange("A1").setFontSize(14).setFontWeight("bold").setFontColor("#4ade80");
+  sheet.getRange("A2").setFontWeight("bold").setFontColor("#94a3b8");
+  sheet.getRange(3, 1, PLAYER_NAMES.length, 1).setFontColor("#ffffff");
+  sheet.getRange("A1:B" + (data.length + 1)).setBackground("#0d1526");
   sheet.setColumnWidth(1, 200);
 }
 
@@ -68,30 +62,21 @@ function setupResultadosTab(ss) {
   if (!sheet) sheet = ss.insertSheet("RESULTADOS");
   sheet.clearContents();
 
-  const headers = [
+  const headers = [[
     "ID Partido", "Goleadores Local", "Goleadores Visitante",
-    "T.Amar. Local (jugadores)", "T.Amar. Visit. (jugadores)",
-    "T.Roja Local", "T.Roja Visit.",
-    "Penal Local (S/N)", "Penal Visit. (S/N)",
-    "Pen.Atajado Local", "Pen.Atajado Visit.",
-    "Alargue (S/N)", "Penales (S/N)",
-    "Invasión (S/N)", "Bomba (S/N)",
-    "Lesionados (nombres)"
-  ];
-
-  const headerRange = sheet.getRange(1, 1, 1, headers.length);
-  headerRange.setValues([headers]);
-  headerRange.setBackground(COLOR_HEADER).setFontColor("#4ade80").setFontWeight("bold");
-
-  sheet.getRange("A1:P300").setBackground(COLOR_MATCH_ROW).setFontColor("white");
+    "T.Amarilla Local", "T.Amarilla Visit.", "T.Roja Local", "T.Roja Visit.",
+    "Penal Local(S/N)", "Penal Visit.(S/N)", "PenAtaj.Local(S/N)", "PenAtaj.Visit.(S/N)",
+    "Alargue(S/N)", "Penales(S/N)", "Invasión(S/N)", "Bomba(S/N)", "Lesionados"
+  ]];
+  sheet.getRange(1, 1, 1, headers[0].length).setValues(headers)
+    .setBackground("#1a2744").setFontColor("#4ade80").setFontWeight("bold");
+  sheet.getRange("A1:P200").setBackground("#0d1526").setFontColor("#ffffff");
   sheet.setFrozenRows(1);
-
-  // Nota de ayuda
   sheet.getRange("A1").setNote(
-    "ID del partido (de football-data.org). " +
-    "Completar después de cada partido.\n" +
-    "Goleadores: separados por coma. Ej: Messi, Di María\n" +
-    "Tarjetas: nombre del jugador o 'EQUIPO' si no sabés el jugador."
+    "ID del partido (número de football-data.org).\n" +
+    "Goleadores: separar con coma. Ej: Messi, Di María\n" +
+    "Tarjetas: nombre del jugador o 'EQUIPO'\n" +
+    "S = Sí, N = No"
   );
 }
 
@@ -100,135 +85,112 @@ function setupTorneoRealTab(ss) {
   if (!sheet) sheet = ss.insertSheet("TORNEO_REAL");
   sheet.clearContents();
 
-  sheet.getRange("A1:B1").setValues([["RESULTADO FINAL DEL TORNEO", ""]]);
-  sheet.getRange("A1").setFontSize(14).setFontWeight("bold").setFontColor("#4ade80");
-
-  const rows = [
-    ["CAMPEON", ""],
-    ["SUBCAMPEON", ""],
-    ["TERCERO", ""],
-    ["MEJOR JUGADOR", ""],
-    ["MEJOR JUGADOR JOVEN", ""],
-    ["GOLEADOR", ""],
+  const data = [
+    ["RESULTADO FINAL DEL TORNEO", ""],
+    ["CAMPEON", ""], ["SUBCAMPEON", ""], ["TERCERO", ""],
+    ["MEJOR JUGADOR", ""], ["MEJOR JUGADOR JOVEN", ""], ["GOLEADOR", ""]
   ];
-
-  sheet.getRange(2, 1, rows.length, 2).setValues(rows);
+  sheet.getRange(1, 1, data.length, 2).setValues(data);
+  sheet.getRange("A1:B" + data.length).setBackground("#0d1526").setFontColor("#ffffff");
+  sheet.getRange("A1").setFontSize(13).setFontWeight("bold").setFontColor("#4ade80");
   sheet.getRange("A2:A7").setFontWeight("bold").setFontColor("#94a3b8");
-  sheet.getRange("B2:B7").setFontColor("white");
-  sheet.getRange("A1:B10").setBackground(COLOR_MATCH_ROW);
-
-  sheet.setColumnWidth(1, 200);
-  sheet.setColumnWidth(2, 200);
+  sheet.setColumnWidth(1, 220).setColumnWidth(2, 200);
 }
 
 function setupPlayerTab(ss, playerName) {
   let sheet = ss.getSheetByName(playerName);
   if (!sheet) sheet = ss.insertSheet(playerName);
   sheet.clearContents();
-  sheet.clearFormats();
 
-  // Title
-  sheet.getRange("A1").setValue(`PRODE - ${playerName.toUpperCase()}`);
-  sheet.getRange("A1:T1").merge().setBackground(COLOR_HEADER)
-    .setFontColor("#4ade80").setFontSize(14).setFontWeight("bold")
-    .setHorizontalAlignment("center");
-
-  // Instructions row
-  sheet.getRange("A2").setValue(
-    "⚽ Completá tus predicciones. S = Sí, N = No. " +
-    "Goleadores separados por coma. Tarjetas: nombre del jugador o 'EQUIPO'."
-  );
-  sheet.getRange("A2:T2").merge().setBackground("#1a2744").setFontColor("#94a3b8")
-    .setFontSize(10).setHorizontalAlignment("left");
-
-  // Headers - match predictions
-  const headers = [
+  const HEADERS = [
     "ID Partido", "Goles Local", "Goles Visit.",
-    "Goleadores Local", "Goleadores Visit.",
-    "T.Amar Local", "T.Amar Visit.", "T.Roja Local", "T.Roja Visit.",
-    "Pen.Local(S/N)", "Pen.Visit.(S/N)", "Pen.At.Local(S/N)", "Pen.At.Visit.(S/N)",
-    "Alargue(S/N)", "Penales(S/N)",
-    "Gol Alarg.Local", "Gol Alarg.Visit.",
+    "Goleadores Local (separar con coma)", "Goleadores Visit. (separar con coma)",
+    "T.Amar Local (jugador o EQUIPO)", "T.Amar Visit.", "T.Roja Local", "T.Roja Visit.",
+    "Penal Local(S/N)", "Penal Visit.(S/N)", "PenAtaj.Local(S/N)", "PenAtaj.Visit.(S/N)",
+    "Alargue(S/N)", "Penales(S/N)", "Gol Alarg.Local", "Gol Alarg.Visit.",
     "Invasión(S/N)", "Bomba(S/N)"
   ];
+  const NCOLS = HEADERS.length;
 
-  const headerRange = sheet.getRange(3, 1, 1, headers.length);
-  headerRange.setValues([headers]);
-  headerRange.setBackground(COLOR_SECTION).setFontColor("#60a5fa")
-    .setFontWeight("bold").setFontSize(10);
+  // --- Título ---
+  sheet.getRange(1, 1, 1, NCOLS).merge()
+    .setValue("⚽ PRODE MUNDIAL 2026 — " + playerName.toUpperCase())
+    .setBackground("#1a2744").setFontColor("#4ade80")
+    .setFontSize(13).setFontWeight("bold").setHorizontalAlignment("center");
 
-  // 104 empty match rows with alternating colors
+  // --- Instrucciones ---
+  sheet.getRange(2, 1, 1, NCOLS).merge()
+    .setValue("Completá tus predicciones. S = Sí | N = No | Goleadores separados por coma | Tarjetas: nombre del jugador o 'EQUIPO'")
+    .setBackground("#0f1e35").setFontColor("#94a3b8").setFontSize(10);
+
+  // --- Headers ---
+  sheet.getRange(3, 1, 1, NCOLS).setValues([HEADERS])
+    .setBackground("#16213e").setFontColor("#60a5fa").setFontWeight("bold");
+
+  // --- 104 filas vacías en batch ---
+  const emptyRows = Array(104).fill(null).map(() => Array(NCOLS).fill(""));
+  sheet.getRange(4, 1, 104, NCOLS).setValues(emptyRows).setFontColor("#ffffff");
+
+  // Colores alternados en batch
+  const bgLight = Array(52).fill(null).map(() => Array(NCOLS).fill("#0d1526"));
+  const bgDark  = Array(52).fill(null).map(() => Array(NCOLS).fill("#0f1e35"));
   for (let i = 0; i < 104; i++) {
-    const rowNum = 4 + i;
-    const bg = i % 2 === 0 ? COLOR_MATCH_ROW : "#0f1e35";
-    sheet.getRange(rowNum, 1, 1, headers.length).setBackground(bg).setFontColor("white");
-    // Match ID placeholder
-    sheet.getRange(rowNum, 1).setValue("").setFontColor("#4b5563");
+    const bg = i % 2 === 0 ? "#0d1526" : "#0f1e35";
+    sheet.getRange(4 + i, 1, 1, NCOLS).setBackground(bg);
   }
 
-  // LESIONES section
-  const lesionesRow = 4 + 104 + 1;
-  sheet.getRange(lesionesRow, 1).setValue("LESIONES");
-  sheet.getRange(lesionesRow, 1, 1, 4).merge().setBackground("#2d1b1b")
-    .setFontColor("#f87171").setFontWeight("bold");
-  sheet.getRange(lesionesRow + 1, 1).setValue("(nombre del jugador que creés que se va a lesionar - 1 pto c/u)");
-  sheet.getRange(lesionesRow + 1, 1, 1, 4).merge().setFontColor("#6b7280").setBackground(COLOR_MATCH_ROW);
+  // --- Sección LESIONES ---
+  const lesRow = 109;
+  sheet.getRange(lesRow, 1, 1, 4).merge()
+    .setValue("LESIONES").setBackground("#2d1b1b").setFontColor("#f87171").setFontWeight("bold");
+  sheet.getRange(lesRow + 1, 1, 1, 4).merge()
+    .setValue("Escribí el nombre de los jugadores que creés que se van a lesionar (1 pto c/u)")
+    .setBackground("#0d1526").setFontColor("#6b7280").setFontSize(10);
+  const lesData = Array(10).fill(null).map(() => [""]);
+  sheet.getRange(lesRow + 2, 1, 10, 1).setValues(lesData)
+    .setBackground("#0d1526").setFontColor("#ffffff");
 
-  // 10 rows for injury predictions
-  for (let i = 0; i < 10; i++) {
-    sheet.getRange(lesionesRow + 2 + i, 1).setBackground(COLOR_MATCH_ROW).setFontColor("white")
-      .setBorder(true, true, true, true, false, false, "#1e3a5f", SpreadsheetApp.BorderStyle.SOLID);
-  }
+  // --- Sección TORNEO ---
+  const torRow = 122;
+  sheet.getRange(torRow, 1, 1, 4).merge()
+    .setValue("TORNEO").setBackground("#1e3a2f").setFontColor("#4ade80").setFontWeight("bold");
 
-  // TORNEO section
-  const torneoRow = lesionesRow + 13;
-  sheet.getRange(torneoRow, 1).setValue("TORNEO");
-  sheet.getRange(torneoRow, 1, 1, 4).merge().setBackground(COLOR_GREEN)
-    .setFontColor("#4ade80").setFontWeight("bold");
-
-  const torneoItems = [
-    ["CAMPEON", "15 pts"],
-    ["SUBCAMPEON", "12 pts"],
-    ["TERCERO", "10 pts"],
-    ["MEJOR JUGADOR", "10 pts"],
-    ["MEJOR JUGADOR JOVEN", "5 pts"],
-    ["GOLEADOR", "10 pts"],
+  const torneoData = [
+    ["CAMPEON", "", "→ 15 pts"],
+    ["SUBCAMPEON", "", "→ 12 pts"],
+    ["TERCERO", "", "→ 10 pts"],
+    ["MEJOR JUGADOR", "", "→ 10 pts"],
+    ["MEJOR JUGADOR JOVEN", "", "→ 5 pts"],
+    ["GOLEADOR", "", "→ 10 pts"],
   ];
+  sheet.getRange(torRow + 1, 1, torneoData.length, 3).setValues(torneoData)
+    .setBackground("#0d1526").setFontColor("#ffffff");
+  sheet.getRange(torRow + 1, 1, torneoData.length, 1).setFontColor("#94a3b8").setFontWeight("bold");
+  sheet.getRange(torRow + 1, 3, torneoData.length, 1).setFontColor("#4ade80").setFontSize(10);
 
-  torneoItems.forEach(([label, pts], i) => {
-    const row = torneoRow + 1 + i;
-    sheet.getRange(row, 1).setValue(label).setFontColor("#94a3b8").setFontWeight("bold");
-    sheet.getRange(row, 2).setValue("").setFontColor("white");
-    sheet.getRange(row, 3).setValue(pts).setFontColor("#4ade80").setFontSize(10);
-    sheet.getRange(row, 1, 1, 3).setBackground(COLOR_MATCH_ROW);
-  });
-
-  // Column widths
-  sheet.setColumnWidth(1, 90);   // ID
-  sheet.setColumnWidth(2, 80);   // home goals
-  sheet.setColumnWidth(3, 80);   // away goals
-  sheet.setColumnWidth(4, 180);  // home scorers
-  sheet.setColumnWidth(5, 180);  // away scorers
-  sheet.setColumnWidths(6, 14, 100); // rest
-
+  // --- Anchos de columna ---
+  sheet.setColumnWidth(1, 90);
+  sheet.setColumnWidth(2, 80);
+  sheet.setColumnWidth(3, 80);
+  sheet.setColumnWidth(4, 200);
+  sheet.setColumnWidth(5, 200);
+  for (let c = 6; c <= NCOLS; c++) sheet.setColumnWidth(c, 110);
   sheet.setFrozenRows(3);
+
+  SpreadsheetApp.flush();
 }
 
-// Run this to lock all player tabs on June 10
+// Ejecutar el 10 de junio para bloquear las pestañas
 function lockPlayerTabs() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const me = Session.getActiveUser().getEmail();
-
   for (const name of PLAYER_NAMES) {
     const sheet = ss.getSheetByName(name);
     if (!sheet) continue;
-
-    const protection = sheet.protect().setDescription(`Bloqueado el 10/6 - ${name}`);
-    protection.removeEditors(protection.getEditors());
-    if (protection.canDomainEdit()) protection.setDomainEdit(false);
-    // Solo el owner puede editar
-    protection.addEditor(me);
+    const prot = sheet.protect().setDescription("Bloqueado 10/6");
+    prot.removeEditors(prot.getEditors());
+    if (prot.canDomainEdit()) prot.setDomainEdit(false);
+    prot.addEditor(me);
   }
-
-  SpreadsheetApp.getUi().alert("🔒 Pestañas de jugadores bloqueadas. Solo el owner puede editarlas.");
+  SpreadsheetApp.getUi().alert("🔒 Pestañas bloqueadas. Solo vos podés editarlas.");
 }
