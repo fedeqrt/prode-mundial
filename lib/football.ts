@@ -15,7 +15,7 @@ async function fetchFD(path: string) {
 
 export async function getAllMatches(): Promise<Match[]> {
   try {
-    const data = await fetchFD(`/competitions/${COMPETITION_CODE}/matches`);
+    const data = await fetchFD(`/competitions/${COMPETITION_CODE}/matches?season=2026`);
     return (data.matches || []).map(parseMatch);
   } catch (e) {
     console.error("Error fetching matches:", e);

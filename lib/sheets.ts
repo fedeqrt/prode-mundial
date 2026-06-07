@@ -40,8 +40,8 @@ async function readTab(tabName: string): Promise<string[][]> {
 export async function getPlayerNames(): Promise<string[]> {
   try {
     const rows = await readTab("CONFIG");
-    // Skip header row (row 0), read column 0
-    return rows.slice(1).map((r) => r[0]).filter(Boolean);
+    // Skip title (row 0) and "JUGADORES" label (row 1), read from row 2
+    return rows.slice(2).map((r) => r[0]).filter(Boolean);
   } catch (e) {
     console.error("Error reading CONFIG tab:", e);
     return [];
